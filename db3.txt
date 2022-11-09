@@ -1,0 +1,27 @@
+create table panel (pv_module varchar(10) primary key,pv_type varchar(20),price int(10),capacity int(10));
+create table distributor (tin varchar(10) primary key,name varchar(20),address varchar(20),contact bigint(10));
+create table user (house_no varchar(10) primary key,name varchar(20),address varchar(20));
+create table sell(pv_module varchar(10),tin varchar(10),qty int(10),foreign key(pv_module) references panel(pv_module),foreign key(tin) references distributor(tin),primary key(pv_module,tin));
+create table purchase(pv_module varchar(10),house_no varchar(10),foreign key(pv_module) references panel(pv_module),foreign key(house_no) references user(house_no),primary key(pv_module,house_no));
+create table install (tin varchar(10),pv_module varchar(10),house_no varchar(10),i_charge int(10),i_date date,i_type varchar(10),foreign key(tin) references distributor(tin),foreign key(pv_module) references panel(pv_module),foreign key(house_no) references user(house_no),primary key(tin,pv_module,house_no));
+
+insert into panel values("p10","monocrystalline",20000,20),("p11","monocrystalline",25000,40),("p12","monocrystalline",22000,30),("p13","polycrystalline",24000,35),("p14","polycrystalline",25000,32),("p15","polycrystalline",28000,43),("p16","polycrystalline",30000,53),("p17","monocrystalline",31000,43);
+
+insert into user values("b10","raj","HSR layout"),("b11","nagaraj","RR nagar"),("b12","shreya","AECS layout"),("b13","manju","RPC layout"),("b14","roshan","MC layout"),("b15","kiran","silk board"),("b16","karthik","BTM layout"),("b17","adithi","JP nagar");
+
+insert into distributor values("t10","Ravi","Jayanagar","8752140023"),("t11","sharath","RR nagar","9752140043"),("t12","Kumar","JP nagar","8152140453"),("t13","Dilip","Bommanahalli","9852140459"),("t14","Harish","Electronic city","9552140455"),("t15","Harish","AECS Layout","8552140444"),("t16","Prathik","Bannergatta","9752140321"),("t17","Prakash","Kormangala","8352550321");
+
+insert into install values("t10","p10","b10",20000,20220210,"domestic"),("t11","p11","b11",20000,20211215,"domestic"),("t12","p12","b12",25000,20220220,"commercial"),("t13","p13","b13",24000,20210122,"commercial"),("t14","p14","b14",19000,20200102,"commercial"),("t15","p15","b15",21000,20211102,"commercial"),("t16","p16","b16",23000,202005122,"domestic"),("t17","p17","b17",23500,20200629,"domestic"),("t17","p11","b11",21500,20210629,"commercial"),("t17","p15","b15",28500,20200629,"domestic");
+
+insert into sell values ("p10","t10",5),("p11","t10",4),("p11","t11",4),("p12","t12",1),("p11","t13",5),("p13","t13",4),("p14","t14",2),("p15","t15",7),("p16","t16",3),("p17","t17",8),("p15","t17",10),("p13","t16",6);
+
+insert into purchase values("p10","b11"),("p11","b12"),("p13","b10"),("p14","b11"),("p15","b15"),("p16","b16"),("p17","b17");
+
+1)select d.*,count(d.tin) from distributor d, install i, user u where i.tin=d.tin and i.house_no=u.house_no and i.i_type="domestic" group by d.tin having count(d.tin)>=ALL(select
+ count(d.tin) from distributor d,install i, user u where i.tin=d.tin and i.house_no=u.house_no and i.i_type="domestic" group by d.tin);
+2)select u.address from user u,panel p,install i where u.house_no=i.house_no and p.pv_module=i.pv_module and p.capacity=(select max(capacity) from panel);
+3)select distinct u.address,u.house_no from user u,panel p, install i where u.house_no=i.house_no and p.pv_module=i.pv_module and p.pv_type="monocrystalline";
+4)select u.address,sum(i.i_charge) from user u,install i where u.house_no=i.house_no group by u.address;
+5)select d.*,p.*,i.i_date from distributor d,panel p,install i where d.tin=i.tin and p.pv_module=i.pv_module and i.i_date in(select min(i_date) from install);
+6)select d.i_type,avg(d.i_charge) from (select a.*,b.capacity,c.address,b.pv_type from install a inner join panel b on a.pv_module=b.pv_module inner join user c on c.house_no=a.house_no where a.i_type="commercial")as d group by d.i_type;
+
